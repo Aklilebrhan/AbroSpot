@@ -1,0 +1,29 @@
+{
+  "name": "abrospot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AbroSpot - Ethiopian Social Event Discovery Platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm --workspace=@abrospot/api run dev",
+    "dev:web": "npm --workspace=@abrospot/web run dev",
+    "build:api": "npm --workspace=@abrospot/api run build",
+    "build:web": "npm --workspace=@abrospot/web run build",
+    "db:generate": "npm --workspace=@abrospot/database run generate",
+    "db:seed": "npm --workspace=@abrospot/database run seed",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "keywords": [
+    "ethiopia",
+    "addis-ababa",
+    "events",
+    "discovery",
+    "telegram",
+    "ai"
+  ],
+  "author": "AbroSpot Team",
+  "license": "MIT"
+}

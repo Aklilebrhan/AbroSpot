@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.sourceRouter = void 0;
+const express_1 = require("express");
+const sourceController_js_1 = require("../controllers/sourceController.js");
+const validate_js_1 = require("../middlewares/validate.js");
+const auth_js_1 = require("../middlewares/auth.js");
+exports.sourceRouter = (0, express_1.Router)();
+exports.sourceRouter.get('/', (req, res, next) => sourceController_js_1.sourceController.getSources(req, res, next));
+exports.sourceRouter.post('/', auth_js_1.authenticate, (0, auth_js_1.requireRole)('ADMIN', 'CURATOR'), (0, validate_js_1.validate)(sourceController_js_1.createSourceSchema), (req, res, next) => sourceController_js_1.sourceController.createSource(req, res, next));
+exports.sourceRouter.patch('/:id', auth_js_1.authenticate, (0, auth_js_1.requireRole)('ADMIN', 'CURATOR'), (req, res, next) => sourceController_js_1.sourceController.updateSource(req, res, next));
+exports.sourceRouter.delete('/:id', auth_js_1.authenticate, (0, auth_js_1.requireRole)('ADMIN'), (req, res, next) => sourceController_js_1.sourceController.deleteSource(req, res, next));
+exports.sourceRouter.post('/:id/trigger', auth_js_1.authenticate, (0, auth_js_1.requireRole)('ADMIN', 'CURATOR'), (req, res, next) => sourceController_js_1.sourceController.triggerIngestion(req, res, next));

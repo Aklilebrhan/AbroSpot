@@ -1,0 +1,431 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum UserRole {
+  ADMIN
+  CURATOR
+  USER
+}
+
+enum EventStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  CANCELLED
+  POSTPONED
+  REJECTED
+}
+
+enum OccurrenceStatus {
+  SCHEDULED
+  CANCELLED
+  RESCHEDULED
+  COMPLETED
+}
+
+enum SourcePlatform {
+  TELEGRAM
+  INSTAGRAM
+  X_TWITTER
+  TIKTOK
+  LINKEDIN
+  MANUAL
+}
+
+enum SourceStatus {
+  ACTIVE
+  PAUSED
+  ERROR
+  RATE_LIMITED
+  PENDING_AUTH
+}
+
+enum PostProcessingStatus {
+  PENDING
+  EXTRACTING
+  EXTRACTED
+  DUPLICATE
+  REJECTED_NOT_EVENT
+  FAILED
+}
+
+enum CalendarSystem {
+  GREGORIAN
+  ETHIOPIAN
+  MIXED
+}
+
+enum LanguageCode {
+  AMHARIC
+  ENGLISH
+  MIXED
+  OTHER
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RESOLVED_MERGED
+}
+
+enum ReviewReason {
+  LOW_CONFIDENCE
+  DATE_AMBIGUITY
+  POSSIBLE_DUPLICATE
+  MISSING_VENUE
+  AMHARIC_UNCERTAINTY
+  COMMUNITY_REPORT
+}
+
+// ==========================================
+// USER & AUTHENTICATION
+// ==========================================
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?
+  name          String?
+  role          UserRole  @default(USER)
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  savedEvents   SavedEvent[]
+  assignedReviews ReviewQueueItem[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+// ==========================================
+// CANONICAL EVENT & TAXONOMY
+// ==========================================
+
+model EventCategory {
+  id           String   @id @default(uuid())
+  slug         String   @unique
+  name         String   @unique
+  nameAmharic  String?
+  description  String?
+  iconName     String?  // Lucide icon identifier e.g. "laptop", "music", "palette"
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  events       Event[]
+
+  @@index([slug])
+  @@map("event_categories")
+}
+
+model EventLocation {
+  id            String   @id @default(uuid())
+  venueName     String
+  city          String   @default("Addis Ababa")
+  subCity       String?  // e.g. "Bole", "Kirkos", "Yeka", "Arada"
+  landmark      String?  // e.g. "Behind Edna Mall", "Next to Zefmesh Grand Mall"
+  streetAddress String?
+  googleMapsUrl String?
+  latitude      Decimal? @db.Decimal(10, 7)
+  longitude     Decimal? @db.Decimal(10, 7)
+  isVirtual     Boolean  @default(false)
+  virtualUrl    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  events        Event[]
+
+  @@index([city, subCity])
+  @@index([venueName])
+  @@map("event_locations")
+}
+
+model Event {
+  id                 String       @id @default(uuid())
+  slug               String       @unique
+  title              String
+  titleAmharic       String?
+  summary            String?      @db.Text
+  description        String?      @db.Text
+  status             EventStatus  @default(PENDING_REVIEW)
+  
+  categoryId         String
+  category           EventCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  
+  locationId         String?
+  location           EventLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  // Pricing
+  isFree             Boolean      @default(false)
+  priceAmount        Decimal?     @db.Decimal(10, 2)
+  priceCurrency      String       @default("ETB")
+  ticketUrl          String?
+
+  // Organizer details
+  organizerName      String?
+  organizerContact   String?
+
+  // Quality & Confidence
+  confidenceScore    Float        @default(1.0)
+  requiresReview     Boolean      @default(false)
+  isFeatured         Boolean      @default(false)
+  isVerified         Boolean      @default(false)
+  tags               String[]     @default([])
+
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  // Relations
+  occurrences        EventOccurrence[]
+  media              EventMedia[]
+  sourcePosts        SourcePost[]
+  reviewQueueItems   ReviewQueueItem[]
+  savedByUsers       SavedEvent[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([createdAt])
+  @@index([isFeatured, status])
+  @@map("events")
+}
+
+model EventOccurrence {
+  id                     String           @id @default(uuid())
+  eventId                String
+  event                  Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  // Normalized Gregorian Date & Time (UTC+3 / Africa/Addis_Ababa)
+  startDate              DateTime         @db.Date
+  endDate                DateTime?        @db.Date
+  startTime              String?          // e.g. "18:30:00"
+  endTime                String?          // e.g. "22:00:00"
+  timezone               String           @default("Africa/Addis_Ababa")
+
+  // Original Preserved Context
+  originalDateExpression String?          // e.g. "መጋቢት 15, 2018 ዓ.ም ከሰዓት 12:30"
+  calendarSystem         CalendarSystem   @default(GREGORIAN)
+  
+  // Recurring Configuration
+  isRecurring            Boolean          @default(false)
+  recurrenceRule         String?          // iCal RRULE format (e.g. "FREQ=WEEKLY;BYDAY=FR")
+  
+  status                 OccurrenceStatus @default(SCHEDULED)
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+
+  @@index([startDate])
+  @@index([eventId, startDate])
+  @@map("event_occurrences")
+}
+
+model EventMedia {
+  id             String    @id @default(uuid())
+  eventId        String
+  event          Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  mediaType      MediaType @default(IMAGE)
+  url            String    // CDN/Public URL
+  localPath      String?   // Local storage path for offline/caching
+  thumbnailUrl   String?
+  isPrimaryFlyer Boolean   @default(false)
+  
+  mimeType       String?
+  width          Int?
+  height         Int?
+  fileSizeBytes  Int?
+  blurHash       String?
+
+  createdAt      DateTime  @default(now())
+
+  @@index([eventId, isPrimaryFlyer])
+  @@map("event_media")
+}
+
+// ==========================================
+// SOURCE INGESTION & AUDIT TRAIL
+// ==========================================
+
+model MonitoredSource {
+  id                    String         @id @default(uuid())
+  platform              SourcePlatform
+  identifier            String         // e.g. "@linkupaddis", channel ID, or profile URL
+  displayName           String
+  description           String?
+  avatarUrl             String?
+  sourceUrl             String?
+
+  status                SourceStatus   @default(ACTIVE)
+  fetchFrequencyMinutes Int            @default(30)
+  lastFetchedAt         DateTime?
+  lastPostIdentifier    String?
+  errorCount            Int            @default(0)
+  lastErrorMessage      String?
+
+  metadata              Json?          // Platform-specific configuration (e.g. channel access hash)
+
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  posts                 SourcePost[]
+  ingestionJobs         IngestionJob[]
+
+  @@unique([platform, identifier])
+  @@index([platform, status])
+  @@map("monitored_sources")
+}
+
+model SourcePost {
+  id                  String               @id @default(uuid())
+  monitoredSourceId   String?
+  monitoredSource     MonitoredSource?     @relation(fields: [monitoredSourceId], references: [id], onDelete: SetNull)
+
+  platform            SourcePlatform
+  externalPostId      String               // ID from Telegram, X, IG etc.
+  postUrl             String?
+  authorUsername      String?
+  publishedAt         DateTime
+  
+  rawText             String?              @db.Text
+  rawPayload          Json                 // Complete untouched JSON from source
+  mediaUrls           String[]             @default([])
+
+  processingStatus    PostProcessingStatus @default(PENDING)
+  
+  // Canonical event linkage (multiple posts may resolve to one event)
+  canonicalEventId    String?
+  canonicalEvent      Event?               @relation(fields: [canonicalEventId], references: [id], onDelete: SetNull)
+
+  // Duplicate detection linkage
+  duplicateOfPostId   String?
+  duplicateOfPost     SourcePost?          @relation("PostDuplicates", fields: [duplicateOfPostId], references: [id], onDelete: SetNull)
+  duplicatePosts      SourcePost[]         @relation("PostDuplicates")
+
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  extractionResult    ExtractionResult?
+  reviewQueueItem     ReviewQueueItem?
+
+  @@unique([platform, externalPostId])
+  @@index([processingStatus])
+  @@index([publishedAt])
+  @@index([canonicalEventId])
+  @@map("source_posts")
+}
+
+model ExtractionResult {
+  id                     String         @id @default(uuid())
+  sourcePostId           String         @unique
+  sourcePost             SourcePost     @relation(fields: [sourcePostId], references: [id], onDelete: Cascade)
+
+  isEvent                Boolean        @default(false)
+  confidenceScore        Float          @default(0.0)
+  
+  // OCR Content
+  ocrAmharicText         String?        @db.Text
+  ocrEnglishText         String?        @db.Text
+  fullExtractedText      String?        @db.Text
+  detectedLanguage       LanguageCode   @default(ENGLISH)
+
+  // Structured extraction snapshot
+  extractedJson          Json           // Full normalized JSON output from LLM/NLP
+  validationErrors       Json?          // Zod or Pydantic validation issues
+  missingFields          String[]       @default([])
+  
+  // Audit & Review
+  requiresReview         Boolean        @default(false)
+  reviewReason           ReviewReason?
+  modelEngine            String?        // e.g. "telethon+easyocr+gemini-flash"
+
+  createdAt              DateTime       @default(now())
+
+  @@index([isEvent, confidenceScore])
+  @@index([requiresReview])
+  @@map("extraction_results")
+}
+
+model ReviewQueueItem {
+  id                 String         @id @default(uuid())
+  sourcePostId       String         @unique
+  sourcePost         SourcePost     @relation(fields: [sourcePostId], references: [id], onDelete: Cascade)
+  
+  eventId            String?
+  event              Event?         @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  reason             ReviewReason   @default(LOW_CONFIDENCE)
+  status             ReviewStatus   @default(PENDING)
+  notes              String?        @db.Text
+
+  assignedToUserId   String?
+  assignedToUser     User?          @relation(fields: [assignedToUserId], references: [id], onDelete: SetNull)
+  
+  reviewedAt         DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([status])
+  @@index([reason])
+  @@map("review_queue_items")
+}
+
+model IngestionJob {
+  id                 String           @id @default(uuid())
+  monitoredSourceId  String
+  monitoredSource    MonitoredSource  @relation(fields: [monitoredSourceId], references: [id], onDelete: Cascade)
+
+  startedAt          DateTime         @default(now())
+  finishedAt         DateTime?
+  status             String           @default("RUNNING") // RUNNING, SUCCESS, FAILED
+  postsFound         Int              @default(0)
+  postsIngested      Int              @default(0)
+  errorMessage       String?          @db.Text
+
+  @@index([monitoredSourceId, startedAt])
+  @@map("ingestion_jobs")
+}
+
+model SavedEvent {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@map("saved_events")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String   // e.g. "APPROVE_EVENT", "MERGE_DUPLICATE", "UPDATE_SOURCE"
+  entityType String   // e.g. "Event", "SourcePost"
+  entityId   String
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}

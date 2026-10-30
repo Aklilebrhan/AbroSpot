@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Persistent Datastore
+  postgres:
+    image: postgres:16-alpine
+    container_name: abrospot_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-abrospot}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - abrospot_net
+
+  # 2. Redis Cache & Job Stream Broker
+  redis:
+    image: redis:7-alpine
+    container_name: abrospot_redis
+    restart: always
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - abrospot_net
+
+  # 3. Python AI Ingestion & Extraction Engine
+  ai-ingestion:
+    build:
+      context: ./services/ai-ingestion
+      dockerfile: Dockerfile
+    container_name: abrospot_ai_ingestion
+    restart: always
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-abrospot}
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_DIR: /app/storage/flyers
+      TELEGRAM_API_ID: ${TELEGRAM_API_ID:-}
+      TELEGRAM_API_HASH: ${TELEGRAM_API_HASH:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_SESSION_NAME: /app/storage/telethon_session
+      X_BEARER_TOKEN: ${X_BEARER_TOKEN:-}
+      INSTAGRAM_ACCESS_TOKEN: ${INSTAGRAM_ACCESS_TOKEN:-}
+      INSTAGRAM_ACCOUNT_ID: ${INSTAGRAM_ACCOUNT_ID:-}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:-abrospot-internal-secret-token}
+    volumes:
+      - flyer_storage:/app/storage/flyers
+      - telethon_session:/app/storage
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - abrospot_net
+
+  # 4. Main Backend (Express.js + Prisma)
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: abrospot_api
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-abrospot}?schema=public
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-abrospot-super-secure-jwt-secret-key-2026}
+      AI_SERVICE_URL: http://ai-ingestion:8000
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:-abrospot-internal-secret-token}
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ai-ingestion:
+        condition: service_started
+    networks:
+      - abrospot_net
+
+  # 5. Frontend Discovery Web App (Next.js 14)
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: abrospot_web
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    networks:
+      - abrospot_net
+
+volumes:
+  postgres_data:
+  redis_data:
+  flyer_storage:
+  telethon_session:
+
+networks:
+  abrospot_net:
+    driver: bridge

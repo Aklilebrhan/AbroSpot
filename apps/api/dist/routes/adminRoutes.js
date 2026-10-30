@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.adminRouter = void 0;
+const express_1 = require("express");
+const adminController_js_1 = require("../controllers/adminController.js");
+const auth_js_1 = require("../middlewares/auth.js");
+exports.adminRouter = (0, express_1.Router)();
+exports.adminRouter.get('/ingestion/status', auth_js_1.authenticate, (0, auth_js_1.requireRole)('ADMIN', 'CURATOR'), (req, res, next) => adminController_js_1.adminController.getIngestionStatus(req, res, next));
+exports.adminRouter.get('/review-queue', auth_js_1.authenticate, (0, auth_js_1.requireRole)('ADMIN', 'CURATOR'), (req, res, next) => adminController_js_1.adminController.getReviewQueue(req, res, next));
+exports.adminRouter.post('/review/:id/approve', auth_js_1.authenticate, (0, auth_js_1.requireRole)('ADMIN', 'CURATOR'), (req, res, next) => adminController_js_1.adminController.approveReview(req, res, next));
+exports.adminRouter.post('/review/:id/reject', auth_js_1.authenticate, (0, auth_js_1.requireRole)('ADMIN', 'CURATOR'), (req, res, next) => adminController_js_1.adminController.rejectReview(req, res, next));
+exports.adminRouter.post('/review/:id/merge', auth_js_1.authenticate, (0, auth_js_1.requireRole)('ADMIN', 'CURATOR'), (req, res, next) => adminController_js_1.adminController.mergeDuplicate(req, res, next));

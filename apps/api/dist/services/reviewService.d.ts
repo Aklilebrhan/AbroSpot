@@ -1,0 +1,173 @@
+import { ReviewStatus } from '@abrospot/database';
+export declare class ReviewService {
+    getQueue(status?: ReviewStatus): Promise<({
+        event: ({
+            category: {
+                id: string;
+                slug: string;
+                description: string | null;
+                createdAt: Date;
+                updatedAt: Date;
+                name: string;
+                nameAmharic: string | null;
+                iconName: string | null;
+                displayOrder: number;
+            };
+            location: {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                venueName: string;
+                city: string;
+                subCity: string | null;
+                landmark: string | null;
+                streetAddress: string | null;
+                googleMapsUrl: string | null;
+                latitude: import("@prisma/client/runtime/library").Decimal | null;
+                longitude: import("@prisma/client/runtime/library").Decimal | null;
+                isVirtual: boolean;
+                virtualUrl: string | null;
+            } | null;
+            occurrences: {
+                id: string;
+                status: import(".prisma/client").$Enums.OccurrenceStatus;
+                createdAt: Date;
+                updatedAt: Date;
+                startDate: Date;
+                eventId: string;
+                endDate: Date | null;
+                startTime: string | null;
+                endTime: string | null;
+                timezone: string;
+                originalDateExpression: string | null;
+                calendarSystem: import(".prisma/client").$Enums.CalendarSystem;
+                isRecurring: boolean;
+                recurrenceRule: string | null;
+            }[];
+        } & {
+            id: string;
+            slug: string;
+            title: string;
+            titleAmharic: string | null;
+            summary: string | null;
+            description: string | null;
+            status: import(".prisma/client").$Enums.EventStatus;
+            categoryId: string;
+            locationId: string | null;
+            isFree: boolean;
+            priceAmount: import("@prisma/client/runtime/library").Decimal | null;
+            priceCurrency: string;
+            ticketUrl: string | null;
+            organizerName: string | null;
+            organizerContact: string | null;
+            confidenceScore: number;
+            requiresReview: boolean;
+            isFeatured: boolean;
+            isVerified: boolean;
+            tags: string[];
+            createdAt: Date;
+            updatedAt: Date;
+        }) | null;
+        sourcePost: {
+            monitoredSource: {
+                id: string;
+                description: string | null;
+                status: import(".prisma/client").$Enums.SourceStatus;
+                createdAt: Date;
+                updatedAt: Date;
+                platform: import(".prisma/client").$Enums.SourcePlatform;
+                identifier: string;
+                displayName: string;
+                avatarUrl: string | null;
+                sourceUrl: string | null;
+                fetchFrequencyMinutes: number;
+                lastFetchedAt: Date | null;
+                lastPostIdentifier: string | null;
+                errorCount: number;
+                lastErrorMessage: string | null;
+                metadata: import("@prisma/client/runtime/library").JsonValue | null;
+            } | null;
+            extractionResult: {
+                id: string;
+                confidenceScore: number;
+                requiresReview: boolean;
+                createdAt: Date;
+                sourcePostId: string;
+                isEvent: boolean;
+                ocrAmharicText: string | null;
+                ocrEnglishText: string | null;
+                fullExtractedText: string | null;
+                detectedLanguage: import(".prisma/client").$Enums.LanguageCode;
+                extractedJson: import("@prisma/client/runtime/library").JsonValue;
+                validationErrors: import("@prisma/client/runtime/library").JsonValue | null;
+                missingFields: string[];
+                reviewReason: import(".prisma/client").$Enums.ReviewReason | null;
+                modelEngine: string | null;
+            } | null;
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            monitoredSourceId: string | null;
+            platform: import(".prisma/client").$Enums.SourcePlatform;
+            externalPostId: string;
+            postUrl: string | null;
+            authorUsername: string | null;
+            publishedAt: Date;
+            rawText: string | null;
+            rawPayload: import("@prisma/client/runtime/library").JsonValue;
+            mediaUrls: string[];
+            processingStatus: import(".prisma/client").$Enums.PostProcessingStatus;
+            canonicalEventId: string | null;
+            duplicateOfPostId: string | null;
+        };
+    } & {
+        id: string;
+        status: import(".prisma/client").$Enums.ReviewStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        eventId: string | null;
+        sourcePostId: string;
+        reason: import(".prisma/client").$Enums.ReviewReason;
+        notes: string | null;
+        assignedToUserId: string | null;
+        reviewedAt: Date | null;
+    })[]>;
+    approveItem(id: string, userId?: string, notes?: string): Promise<{
+        id: string;
+        status: import(".prisma/client").$Enums.ReviewStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        eventId: string | null;
+        sourcePostId: string;
+        reason: import(".prisma/client").$Enums.ReviewReason;
+        notes: string | null;
+        assignedToUserId: string | null;
+        reviewedAt: Date | null;
+    }>;
+    rejectItem(id: string, userId?: string, notes?: string): Promise<{
+        id: string;
+        status: import(".prisma/client").$Enums.ReviewStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        eventId: string | null;
+        sourcePostId: string;
+        reason: import(".prisma/client").$Enums.ReviewReason;
+        notes: string | null;
+        assignedToUserId: string | null;
+        reviewedAt: Date | null;
+    }>;
+    mergeDuplicate(id: string, targetEventId: string, userId?: string): Promise<{
+        id: string;
+        status: import(".prisma/client").$Enums.ReviewStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        eventId: string | null;
+        sourcePostId: string;
+        reason: import(".prisma/client").$Enums.ReviewReason;
+        notes: string | null;
+        assignedToUserId: string | null;
+        reviewedAt: Date | null;
+    }>;
+}
+export declare const reviewService: ReviewService;
