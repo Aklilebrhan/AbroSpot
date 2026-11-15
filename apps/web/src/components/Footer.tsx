@@ -1,75 +1,128 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
-import { Send, Instagram, Twitter, Linkedin, Heart } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="w-full bg-darkSurface-300 border-t border-white/10 mt-20 text-slate-400">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          {/* Brand Info */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm">
-                አ
-              </div>
-              <span className="font-bold text-lg text-white">AbroSpot</span>
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Autonomous Ethiopian Social Event Intelligence Platform. Continuous multimodal ingestion from Telegram, Instagram, and X across Addis Ababa.
+    <footer className="w-full border-t border-[var(--border)] bg-[var(--bg)] transition-colors duration-200">
+      <div className="max-w-[1200px] mx-auto px-[clamp(16px,3vw,32px)] py-14 lg:py-16">
+        
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-12 mb-12">
+          
+          {/* Wordmark + Blurb */}
+          <div className="md:col-span-5 space-y-4">
+            <Link
+              href="/"
+              className="inline-flex items-center text-[22px] font-bold tracking-tight text-[var(--text)] select-none"
+            >
+              <span>Abrospot</span>
+              <span className="text-[var(--accent)] font-extrabold text-[24px]">.</span>
+            </Link>
+            <p className="text-sm text-[var(--muted)] leading-relaxed max-w-sm">
+              One place to follow Telegram, TikTok, X and Instagram. Every post links back to its original source.
             </p>
           </div>
 
-          {/* Sub-Cities */}
-          <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-white mb-3">Popular Hubs</h4>
-            <ul className="space-y-2 text-xs">
-              <li><Link href="/events?subCity=Bole" className="hover:text-brand-400">Bole (ቦሌ)</Link></li>
-              <li><Link href="/events?subCity=Kirkos" className="hover:text-brand-400">Kazanchis & Kirkos (ቂርቆስ)</Link></li>
-              <li><Link href="/events?subCity=Arada" className="hover:text-brand-400">Piassa & Arada (አራዳ)</Link></li>
-              <li><Link href="/events?subCity=Yeka" className="hover:text-brand-400">4 Kilo & Yeka (የካ)</Link></li>
-            </ul>
-          </div>
-
-          {/* Platforms Monitored */}
-          <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-white mb-3">Ingestion Sources</h4>
-            <ul className="space-y-2 text-xs">
-              <li className="flex items-center space-x-1.5"><Send className="w-3.5 h-3.5 text-blue-400" /><span>Telegram Channels (@linkupaddis, @eventsethiopia)</span></li>
-              <li className="flex items-center space-x-1.5"><Instagram className="w-3.5 h-3.5 text-pink-400" /><span>Instagram Creator Guides</span></li>
-              <li className="flex items-center space-x-1.5"><Twitter className="w-3.5 h-3.5 text-sky-400" /><span>X (Twitter) Developer Streams</span></li>
-              <li className="flex items-center space-x-1.5"><Linkedin className="w-3.5 h-3.5 text-blue-500" /><span>Tech & Startup Hubs</span></li>
-            </ul>
-          </div>
-
-          {/* System Status */}
-          <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-white mb-3">System Intelligence</h4>
-            <div className="p-3 rounded-xl bg-darkSurface-100 subtle-border space-y-2 text-xs">
-              <div className="flex items-center justify-between">
-                <span>OCR Pipeline</span>
-                <span className="text-emerald-400 font-medium">Bilingual Ready</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Calendar Normalizer</span>
-                <span className="text-brand-400 font-medium">Ge&apos;ez / Gregorian</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Time Offset</span>
-                <span className="text-slate-300">Africa/Addis_Ababa</span>
-              </div>
+          {/* Three Link Columns */}
+          <div className="md:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-8">
+            
+            {/* Column 1: Platform */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-[var(--text)] tracking-wider">
+                Platform
+              </h4>
+              <ul className="space-y-2 text-sm text-[var(--muted)]">
+                <li>
+                  <a href="#feed" className="hover:text-[var(--accent)] transition-colors py-1 inline-block">
+                    Browse Feed
+                  </a>
+                </li>
+                <li>
+                  <a href="#platforms" className="hover:text-[var(--accent)] transition-colors py-1 inline-block">
+                    Platforms
+                  </a>
+                </li>
+                <li>
+                  <a href="#featured" className="hover:text-[var(--accent)] transition-colors py-1 inline-block">
+                    Trending
+                  </a>
+                </li>
+                <li>
+                  <a href="#saved" className="hover:text-[var(--accent)] transition-colors py-1 inline-block">
+                    Saved Posts
+                  </a>
+                </li>
+              </ul>
             </div>
+
+            {/* Column 2: Support */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-[var(--text)] tracking-wider">
+                Support
+              </h4>
+              <ul className="space-y-2 text-sm text-[var(--muted)]">
+                <li>
+                  <a href="#" onClick={(e) => { e.preventDefault(); alert('Help Center'); }} className="hover:text-[var(--accent)] transition-colors py-1 inline-block">
+                    Help Center
+                  </a>
+                </li>
+                <li>
+                  <a href="#" onClick={(e) => { e.preventDefault(); alert('Terms & Conditions'); }} className="hover:text-[var(--accent)] transition-colors py-1 inline-block">
+                    Terms & Conditions
+                  </a>
+                </li>
+                <li>
+                  <a href="#" onClick={(e) => { e.preventDefault(); alert('Privacy Policy'); }} className="hover:text-[var(--accent)] transition-colors py-1 inline-block">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="#" onClick={(e) => { e.preventDefault(); alert('Contact Us'); }} className="hover:text-[var(--accent)] transition-colors py-1 inline-block">
+                    Contact Us
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 3: Company */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-[var(--text)] tracking-wider">
+                Company
+              </h4>
+              <ul className="space-y-2 text-sm text-[var(--muted)]">
+                <li>
+                  <a href="#" onClick={(e) => { e.preventDefault(); alert('About Us'); }} className="hover:text-[var(--accent)] transition-colors py-1 inline-block">
+                    About Us
+                  </a>
+                </li>
+                <li>
+                  <a href="#" onClick={(e) => { e.preventDefault(); alert('Blog'); }} className="hover:text-[var(--accent)] transition-colors py-1 inline-block">
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a href="#" onClick={(e) => { e.preventDefault(); alert('Report A Post'); }} className="hover:text-[var(--accent)] transition-colors py-1 inline-block">
+                    Report A Post
+                  </a>
+                </li>
+                <li>
+                  <a href="#" onClick={(e) => { e.preventDefault(); alert('Partners'); }} className="hover:text-[var(--accent)] transition-colors py-1 inline-block">
+                    Partners
+                  </a>
+                </li>
+              </ul>
+            </div>
+
           </div>
+
         </div>
 
-        <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
-          <p>© 2026 AbroSpot Ethiopia. Dedicated to Addis Ababa&apos;s cultural and tech scene.</p>
-          <p className="flex items-center space-x-1 mt-2 sm:mt-0">
-            <span>Engineered with</span>
-            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-            <span>for Addis Ababa</span>
-          </p>
+        {/* Centred Copyright Line */}
+        <div className="pt-8 border-t border-[var(--border)] text-center text-xs text-[var(--muted)]">
+          <p>© 2026 Abrospot. All rights reserved.</p>
         </div>
+
       </div>
     </footer>
   );

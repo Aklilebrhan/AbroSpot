@@ -6,33 +6,46 @@ const config: Config = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  darkMode: 'class',
+  darkMode: ['class', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#FFFBEB',
-          100: '#FEF3C7',
-          200: '#FDE68A',
-          300: '#FCD34D',
-          400: '#FBBF24',
-          500: '#F59E0B',
-          600: '#D97706',
-          700: '#B45309',
-          800: '#92400E',
-          900: '#78350F',
-          950: '#451A03',
+        bg: 'var(--bg)',
+        surface: 'var(--surface)',
+        card: 'var(--card)',
+        border: 'var(--border)',
+        text: 'var(--text)',
+        muted: 'var(--muted)',
+        accent: {
+          DEFAULT: 'var(--accent)',
+          soft: 'var(--accent-soft)',
         },
-        ethioGreen: {
-          500: '#10B981',
-          600: '#059669',
+        'on-accent': 'var(--on-accent)',
+        field: 'var(--field)',
+        cta: {
+          DEFAULT: 'var(--cta)',
+          text: 'var(--cta-text)',
+          muted: 'var(--cta-muted)',
         },
-        darkSurface: {
-          50: '#1E293B',
-          100: '#0F172A',
-          200: '#0B1120',
-          300: '#070A12',
+        platform: {
+          telegram: '#1E3A5F',
+          tiktok: '#3B1F4A',
+          x: '#1F2937',
+          instagram: '#5A2A3A',
+          topics: '#14463C',
         },
+      },
+      borderRadius: {
+        card: '24px',
+        tile: '20px',
+        search: '28px',
+        field: '18px',
+      },
+      boxShadow: {
+        theme: 'var(--shadow)',
+      },
+      fontFamily: {
+        poppins: ['var(--font-poppins)', 'Poppins', 'system-ui', 'sans-serif'],
       },
     },
   },
